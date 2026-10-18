@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fault-Tolerant Storage Stack Simulator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <div>
+      <h1>🗄️ Storage Stack Simulator</h1>
+      <p>Watch a file travel through the File System, Buffer Cache and RAID, then break a disk and see what survives.</p>
+    </div>
+    <button id="demoBtn" class="btn demo" onclick="runDemo()">🎬 Run Full Demo</button>
+  </header>
+
+  <section class="panel setup">
+    <label>RAID level
+      <select id="level">
+        <option value="0">RAID 0 · striping</option>
+        <option value="1">RAID 1 · mirroring</option>
+        <option value="5" selected>RAID 5 · parity</option>
+      </select>
+    </label>
+    <label>Disks (2-5)
+      <input id="ndisks" type="number" min="2" max="5" value="4">
+    </label>
+    <label>Cache size (blocks)
+      <input id="csize" type="number" min="1" max="30" value="8">
+    </label>
+    <button class="btn primary" onclick="build()">⚙️ Build array</button>
+    <span class="hint">RAID 1 always uses 2 disks · RAID 5 needs at least 3</span>
+  </section>
+
+  <section class="stack">
+    <div class="layer" id="l-user"><span>👤</span><b>User</b><small>create / read / delete</small></div>
+    <div class="arrow">➜</div>
+    <div class="layer" id="l-fs"><span>📁</span><b>File System</b><small>inodes · directory · bitmap</small></div>
+    <div class="arrow">➜</div>
+    <div class="layer" id="l-cache"><span>⚡</span><b>Buffer Cache</b><small>LRU · hit / miss</small></div>
+    <div class="arrow">➜</div>
+    <div class="layer" id="l-raid"><span>🧩</span><b>RAID Layer</b><small id="raidLabel">RAID 5</small></div>
+    <div class="arrow">➜</div>
+    <div class="layer" id="l-disk"><span>💾</span><b>Virtual Disks</b><small>physical blocks</small></div>
+  </section>
+
+  <div class="layout">
+    <div class="left">
+      <section class="panel">
+        <h2>1 · Create a file</h2>
+        <div class="row">
+          <input id="fname" value="hello.txt" maxlength="8" placeholder="name (max 8)">
+          <button class="btn" onclick="doSample()">✨ Sample text</button>
+        </div>
+        <textarea id="ftext" rows="4" placeholder="type some text..."></textarea>
+        <button class="btn primary" onclick="doCreate()">➕ Create file</button>
+        <small class="hint">1 block = 128 bytes. Long text uses several blocks.</small>
+      </section>
+
+      <section class="panel">
+        <h2>2 · Files</h2>
+        <div id="files"></div>
+        <div class="terminal-title">📄 file viewer</div>
+        <pre id="out"></pre>
+      </section>
+
+      <section class="panel">
+        <h2>3 · Tools</h2>
+        <div class="row">
+          <button class="btn good" onclick="doFsck()">🔍 Run fsck</button>
+          <button class="btn" onclick="doClearCache()">🧹 Clear cache</button>
+          <button class="btn" onclick="document.getElementById('log').innerHTML=''">🗑️ Clear log</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="right">
+      <section class="panel">
+        <h2>Disks</h2>
+        <div class="legend">
+          <span><i class="sw" style="background:#3a4358"></i>metadata</span>
+          <span><i class="sw" style="background:#ffd43b"></i>P parity</span>
+          <span><i class="sw" style="background:linear-gradient(90deg,#ff6b9d,#4dabf7)"></i>file blocks</span>
+          <span><i class="sw ring"></i>just touched</span>
+          <span><i class="sw dead"></i>unreachable</span>
+        </div>
+        <div id="disks"></div>
+      </section>
+
+      <div class="two">
+        <section class="panel">
+          <h2>Buffer cache <small class="hint inline">oldest → newest</small></h2>
+          <div id="cache"></div>
+        </section>
+        <section class="panel">
+          <h2>Statistics</h2>
+          <div id="stats"></div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <h2>What just happened</h2>
+        <div id="log"></div>
+      </section>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+
+  <script src="js/util.js"></script>
+  <script src="js/raid.js"></script>
+  <script src="js/cache.js"></script>
+  <script src="js/fs.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
